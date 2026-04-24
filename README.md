@@ -41,11 +41,11 @@ http://127.0.0.1:4173/
 
 出埃及路線與部分曠野站點在考古與釋經上沒有一致定位。本專案採教學用途的近似座標與傳統候選位置，適合用來呈現事件順序與大致路線，不應視為唯一地理結論。
 
+## 線上版本
+
+👉 **[https://vibe-tjc.github.io/bible-ten-trials-map/](https://vibe-tjc.github.io/bible-ten-trials-map/)**
+
 ## 部署
 
-此專案是純靜態網頁，可部署到 GitHub Pages。建議設定：
-
-- Source: `Deploy from a branch`
-- Branch: `main`
-- Folder: `/ (root)`
+此專案使用 GitHub Actions 自動部署到 GitHub Pages。每次推送到 `main` 分支即自動更新。
 
