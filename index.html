@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>民數記 14:22｜十次試探互動式地圖</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2933;
+      --muted: #5f6f7f;
+      --line: #d8dee6;
+      --surface: #ffffff;
+      --soft: #f5f7fa;
+      --accent: #b9412c;
+      --accent-2: #1f6f78;
+      --gold: #b87817;
+      --shadow: 0 16px 40px rgba(31, 41, 51, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color: var(--ink);
+      background: var(--soft);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(360px, 440px) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      z-index: 500;
+    }
+
+    .intro {
+      padding: 24px 24px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 25px;
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    .verse {
+      margin: 0 0 16px;
+      padding-left: 14px;
+      border-left: 4px solid var(--accent);
+      color: #344251;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:hover,
+    button:focus-visible {
+      border-color: var(--accent-2);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(31, 111, 120, 0.16);
+    }
+
+    .event-list {
+      overflow: auto;
+      padding: 12px 12px 20px;
+    }
+
+    .event-card {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      padding: 12px;
+      margin: 0 0 10px;
+      text-align: left;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .event-card.is-active {
+      border-color: rgba(185, 65, 44, 0.7);
+      box-shadow: 0 0 0 3px rgba(185, 65, 44, 0.12);
+    }
+
+    .badge {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .event-card h2 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      margin: 0 0 7px;
+      color: var(--accent-2);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .summary {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    main {
+      position: relative;
+      min-height: 100vh;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+    }
+
+    .legend {
+      position: absolute;
+      right: 18px;
+      bottom: 24px;
+      z-index: 450;
+      width: min(330px, calc(100% - 36px));
+      padding: 13px 14px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(216, 222, 230, 0.9);
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .legend strong {
+      display: block;
+      color: var(--ink);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .number-marker {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 3px solid #fff;
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 5px 14px rgba(31, 41, 51, 0.35);
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .leaflet-popup-content {
+      min-width: 240px;
+      margin: 14px;
+      color: var(--ink);
+    }
+
+    .popup-title {
+      margin: 0 0 6px;
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .popup-ref {
+      margin: 0 0 8px;
+      color: var(--accent-2);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .popup-body,
+    .popup-place {
+      margin: 0 0 8px;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .popup-place {
+      color: var(--muted);
+    }
+
+    @media (max-width: 840px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(420px, 52vh) auto;
+      }
+
+      main {
+        min-height: 420px;
+        order: 1;
+      }
+
+      aside {
+        min-height: auto;
+        max-height: none;
+        order: 2;
+        border-right: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .intro {
+        padding: 20px 18px 16px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .event-list {
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside aria-label="十次試探事件列表">
+      <section class="intro">
+        <h1>民數記 14:22 的「十次」試探</h1>
+        <p class="verse">「這些人雖看見我的榮耀和我在埃及與曠野所行的神蹟，仍然試探我這十次，不聽從我的話。」</p>
+        <p class="note">下列採常見整理：從紅海前的怨言，到加低斯巴尼亞探子事件。部分地點無法確定，地圖標記使用近似或傳統候選位置。</p>
+      </section>
+
+      <div class="controls">
+        <button type="button" id="fitRoute">顯示全路線</button>
+        <button type="button" id="playRoute">依序播放</button>
+      </div>
+
+      <nav class="event-list" id="eventList" aria-label="事件清單"></nav>
+    </aside>
+
+    <main>
+      <div id="map" role="application" aria-label="出埃及至曠野十次試探地圖"></div>
+      <div class="legend">
+        <strong>讀圖說明</strong>
+        路線與座標是教學用的近似定位，不代表唯一考古結論。同一地點發生多次事件時，標記會略微錯開以方便點選。
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const events = [
+      {
+        id: 1,
+        title: "紅海前懼怕抱怨",
+        reference: "出埃及記 14:10-12",
+        place: "紅海渡口候選區，近蘇伊士灣北端",
+        coords: [29.73, 32.57],
+        summary: "埃及軍兵追來，以色列人懼怕，質問摩西為何把他們帶到曠野受死。"
+      },
+      {
+        id: 2,
+        title: "瑪拉苦水",
+        reference: "出埃及記 15:22-24",
+        place: "瑪拉，常見候選位置為 Ain Hawarah 一帶",
+        coords: [29.34, 32.96],
+        summary: "百姓走了三天找不到水，到了瑪拉又因水苦不能喝而向摩西發怨言。"
+      },
+      {
+        id: 3,
+        title: "汛的曠野求食",
+        reference: "出埃及記 16:1-3",
+        place: "汛的曠野，傳統上在以琳與西奈山之間",
+        coords: [28.93, 33.21],
+        summary: "百姓懷念埃及的肉鍋與飽足，埋怨摩西、亞倫把全會眾帶出來餓死。"
+      },
+      {
+        id: 4,
+        title: "留下嗎哪到早晨",
+        reference: "出埃及記 16:19-20",
+        place: "汛的曠野",
+        coords: [28.86, 33.28],
+        summary: "神吩咐不要把嗎哪留到早晨，仍有人不聽，留下的就生蟲變臭。"
+      },
+      {
+        id: 5,
+        title: "安息日出去收嗎哪",
+        reference: "出埃及記 16:27-30",
+        place: "汛的曠野",
+        coords: [28.80, 33.17],
+        summary: "第七日已有安息日安排，仍有人出去收嗎哪，顯出不遵守神的吩咐。"
+      },
+      {
+        id: 6,
+        title: "利非訂無水",
+        reference: "出埃及記 17:1-7",
+        place: "利非訂，常與 Wadi Feiran 一帶相關",
+        coords: [28.73, 33.62],
+        summary: "百姓因無水與摩西爭鬧，說「耶和華是在我們中間不是？」此地又名瑪撒、米利巴。"
+      },
+      {
+        id: 7,
+        title: "金牛犢",
+        reference: "出埃及記 32:1-10",
+        place: "西奈山，傳統位置為 Jebel Musa 一帶",
+        coords: [28.54, 33.98],
+        summary: "摩西在山上遲延，百姓要求亞倫造可見的神像，違背剛領受的約。"
+      },
+      {
+        id: 8,
+        title: "他備拉發怨言",
+        reference: "民數記 11:1-3",
+        place: "他備拉，西奈往巴蘭曠野路上的不確定站點",
+        coords: [28.95, 34.20],
+        summary: "百姓發惡言，被耶和華聽見；火在營邊焚燒，因此那地名叫他備拉。"
+      },
+      {
+        id: 9,
+        title: "基博羅哈他瓦貪慾",
+        reference: "民數記 11:4-35",
+        place: "基博羅哈他瓦，常置於哈洗錄附近或往北路線上",
+        coords: [29.25, 34.58],
+        summary: "閒雜人大起貪慾，百姓哭號想吃肉，厭棄神所供應的嗎哪。"
+      },
+      {
+        id: 10,
+        title: "加低斯巴尼亞探子事件",
+        reference: "民數記 13:25-14:23",
+        place: "加低斯巴尼亞，常見候選位置為 Ain el-Qudeirat 一帶",
+        coords: [30.65, 34.43],
+        summary: "十二探子回報後，多數人使會眾灰心；百姓拒絕進迦南，甚至想另立首領回埃及。"
+      }
+    ];
+
+    const map = L.map("map", {
+      scrollWheelZoom: true,
+      zoomControl: true
+    }).setView([29.35, 33.45], 8);
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const routeLine = L.polyline(events.map((event) => event.coords), {
+      color: "#1f6f78",
+      weight: 4,
+      opacity: 0.78,
+      dashArray: "9 8"
+    }).addTo(map);
+
+    const bounds = routeLine.getBounds().pad(0.2);
+    map.fitBounds(bounds);
+
+    const markers = new Map();
+    const list = document.querySelector("#eventList");
+
+    function popupHtml(event) {
+      return `
+        <h3 class="popup-title">${event.id}. ${event.title}</h3>
+        <p class="popup-ref">${event.reference}</p>
+        <p class="popup-body">${event.summary}</p>
+        <p class="popup-place">位置：${event.place}</p>
+      `;
+    }
+
+    function markerIcon(id) {
+      return L.divIcon({
+        className: "",
+        html: `<span class="number-marker">${id}</span>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+        popupAnchor: [0, -18]
+      });
+    }
+
+    function setActive(id) {
+      document.querySelectorAll(".event-card").forEach((card) => {
+        card.classList.toggle("is-active", Number(card.dataset.id) === id);
+      });
+    }
+
+    function focusEvent(event, zoom = 10) {
+      const marker = markers.get(event.id);
+      map.flyTo(event.coords, zoom, { duration: 0.75 });
+      marker.openPopup();
+      setActive(event.id);
+    }
+
+    events.forEach((event) => {
+      const marker = L.marker(event.coords, { icon: markerIcon(event.id) })
+        .addTo(map)
+        .bindPopup(popupHtml(event));
+
+      marker.on("click", () => setActive(event.id));
+      markers.set(event.id, marker);
+
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "event-card";
+      card.dataset.id = event.id;
+      card.innerHTML = `
+        <span class="badge">${event.id}</span>
+        <span>
+          <h2>${event.title}</h2>
+          <p class="meta">${event.reference}</p>
+          <p class="summary">${event.summary}</p>
+        </span>
+      `;
+      card.addEventListener("click", () => focusEvent(event));
+      list.appendChild(card);
+    });
+
+    document.querySelector("#fitRoute").addEventListener("click", () => {
+      map.fitBounds(bounds);
+      setActive(0);
+      map.closePopup();
+    });
+
+    let playTimer = null;
+    document.querySelector("#playRoute").addEventListener("click", (buttonEvent) => {
+      const button = buttonEvent.currentTarget;
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+        button.textContent = "依序播放";
+        return;
+      }
+
+      let index = 0;
+      button.textContent = "停止播放";
+      focusEvent(events[index], 10);
+      index += 1;
+
+      playTimer = setInterval(() => {
+        if (index >= events.length) {
+          clearInterval(playTimer);
+          playTimer = null;
+          button.textContent = "依序播放";
+          return;
+        }
+        focusEvent(events[index], 10);
+        index += 1;
+      }, 2600);
+    });
+  </script>
+</body>
+</html>
