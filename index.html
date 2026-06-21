@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>民數記 14:22｜十次試探互動式地圖</title>
   <link rel="preconnect" href="https://unpkg.com">
-  <link rel="preconnect" href="https://webrd01.is.autonavi.com">
-  <link rel="preconnect" href="https://webrd02.is.autonavi.com">
-  <link rel="preconnect" href="https://webrd03.is.autonavi.com">
-  <link rel="preconnect" href="https://webrd04.is.autonavi.com">
+  <link rel="preconnect" href="https://mt0.google.com">
+  <link rel="preconnect" href="https://mt1.google.com">
+  <link rel="preconnect" href="https://mt2.google.com">
+  <link rel="preconnect" href="https://mt3.google.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <style>
     :root {
@@ -416,10 +416,10 @@
       zoomControl: true
     }).setView([29.35, 33.45], 8);
 
-    L.tileLayer("https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", {
-      subdomains: [1, 2, 3, 4],
+    L.tileLayer("https://mt{s}.google.com/vt/lyrs=m&hl=zh-TW&x={x}&y={y}&z={z}", {
+      subdomains: [0, 1, 2, 3],
       maxZoom: 18,
-      attribution: '&copy; 高德地圖'
+      attribution: '&copy; Google Maps'
     }).addTo(map);
 
     const routeLine = L.polyline(events.map((event) => event.coords), {
